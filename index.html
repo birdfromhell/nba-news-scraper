@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #e9ecef;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+            min-width: 200px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #80bdff;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .button:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .copy-button {
+            background: #28a745;
+        }
+
+        .copy-button:hover {
+            background: #218838;
+        }
+
+        .results {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-title {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 18px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .result-title:hover {
+            text-decoration: underline;
+        }
+
+        .result-url {
+            color: #28a745;
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .result-description {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.3s, fadeOut 0.3s 1.7s;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        @keyframes fadeOut {
+            from {opacity: 1;}
+            to {opacity: 0;}
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .search-box, .results {
+                padding: 15px;
+            }
+
+            .search-button, .copy-button {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="Enter search keyword...">
+            <button class="button search-button">Search</button>
+            <button class="button copy-button">Copy All URLs</button>
+        </div>
+        <div class="loading">Searching...</div>
+        <div class="results"></div>
+    </div>
+    <div class="toast">URLs copied to clipboard!</div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        let searchResults = [];
+
+        $('.search-button').click(function() {
+            const keyword = $('.search-input').val();
+            if (!keyword) return;
+
+            $('.loading').show();
+            $('.results').empty();
+            searchResults = [];
+
+            const settings = {
+                async: true,
+                crossDomain: true,
+                url: `https://real-time-web-search.p.rapidapi.com/search?q=${encodeURIComponent(keyword)}&limit=10`,
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-key':'fe7ac125c5msh94f9c196609b1eep12fb18jsndc6f9e5920c3', // Replace with your actual key
+                    'x-rapidapi-host': 'real-time-web-search.p.rapidapi.com'
+                }
+            };
+
+            $.ajax(settings)
+                .done(function(response) {
+                    $('.loading').hide();
+                    
+                    if (response.data && response.data.length > 0) {
+                        searchResults = response.data;
+                        response.data.forEach(function(result) {
+                            const resultHtml = `
+                                <div class="result-item">
+                                    <a href="${result.url}" class="result-title" target="_blank">${result.title}</a>
+                                    <span class="result-url">${result.url}</span>
+                                    <p class="result-description">${result.snippet}</p>
+                                </div>
+                            `;
+                            $('.results').append(resultHtml);
+                        });
+                    } else {
+                        $('.results').html('<p>No results found.</p>');
+                    }
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    $('.loading').hide();
+                    $('.results').html('<p>Error occurred while searching. Please try again.</p>');
+                    console.error('Search failed:', textStatus, errorThrown);
+                    alert('Search failed: ' + errorThrown);
+                });
+        });
+
+        $('.copy-button').click(function() {
+            if (searchResults.length === 0) {
+                alert('No URLs to copy. Please perform a search first.');
+                return;
+            }
+
+            const urls = searchResults.map(result => result.url).join('\n');
+            const textarea = document.createElement('textarea');
+            textarea.value = urls;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            $('.toast').show();
+            setTimeout(() => {
+                $('.toast').hide();
+            }, 2000);
+        });
+
+        $('.search-input').keypress(function(e) {
+            if (e.which == 13) {
+                $('.search-button').click();
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
