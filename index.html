@@ -1,248 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Scraper</title>
+    <title>Pencarian Web</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         body {
-            background: #e9ecef;
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
             padding: 20px;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .search-box {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        #search-container {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .search-input {
-            flex: 1;
-            padding: 12px;
+        #search-input {
+            padding: 10px;
+            width: 80%;
             border: 1px solid #ced4da;
             border-radius: 4px;
-            font-size: 16px;
-            min-width: 200px;
-            transition: border-color 0.3s;
+            margin-bottom: 10px;
         }
 
-        .search-input:focus {
-            border-color: #80bdff;
-            outline: none;
-            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-        }
-
-        .button {
-            background: #007bff;
+        #search-button, #copy-links-button {
+            padding: 10px 20px;
+            background-color: #007bff;
             color: white;
             border: none;
-            padding: 12px 20px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s, transform 0.2s;
+            margin: 5px;
         }
 
-        .button:hover {
-            background: #0056b3;
-            transform: scale(1.05);
+        #search-button:hover, #copy-links-button:hover {
+            background-color: #0056b3;
         }
 
-        .copy-button {
-            background: #28a745;
-        }
-
-        .copy-button:hover {
-            background: #218838;
-        }
-
-        .results {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        #results {
+            margin-top: 20px;
+            width: 80%;
         }
 
         .result-item {
-            padding: 15px;
-            border-bottom: 1px solid #dee2e6;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
         }
-
-        .result-item:last-child {
-            border-bottom: none;
-        }
-
-        .result-title {
-            color: #007bff;
+        
+        .result-item a {
             text-decoration: none;
-            font-size: 18px;
-            margin-bottom: 5px;
-            display: block;
+            color: #007bff;
         }
 
-        .result-title:hover {
+        .result-item a:hover {
             text-decoration: underline;
         }
 
-        .result-url {
-            color: #28a745;
-            font-size: 14px;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .result-description {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            display: none;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            display: none;
-            animation: fadeIn 0.3s, fadeOut 0.3s 1.7s;
-        }
-
-        @keyframes fadeIn {
-            from {opacity: 0;}
-            to {opacity: 1;}
-        }
-
-        @keyframes fadeOut {
-            from {opacity: 1;}
-            to {opacity: 0;}
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .search-box, .results {
-                padding: 15px;
-            }
-
-            .search-button, .copy-button {
-                flex: 1 1 100%;
-            }
+        .button-container {
+            display: flex;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="search-box">
-            <input type="text" class="search-input" placeholder="Enter search keyword...">
-            <button class="button search-button">Search</button>
-            <button class="button copy-button">Copy All URLs</button>
-        </div>
-        <div class="loading">Searching...</div>
-        <div class="results"></div>
-    </div>
-    <div class="toast">URLs copied to clipboard!</div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
+<div id="search-container">
+    <input type="text" id="search-input" placeholder="Cari...">
+    <div class="button-container">
+        <button id="search-button">Cari</button>
+        <button id="copy-links-button">Copy Semua Link</button>
+    </div>
+    <div id="results"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
     $(document).ready(function() {
         let searchResults = [];
 
-        $('.search-button').click(function() {
-            const keyword = $('.search-input').val();
-            if (!keyword) return;
-
-            $('.loading').show();
-            $('.results').empty();
-            searchResults = [];
-
+        $('#search-button').click(function() {
+            const query = $('#search-input').val();
             const settings = {
                 async: true,
                 crossDomain: true,
-                url: `https://real-time-web-search.p.rapidapi.com/search?q=${encodeURIComponent(keyword)}&limit=10`,
-                method: 'GET',
+                url: 'https://google-api31.p.rapidapi.com/websearch',
+                method: 'POST',
                 headers: {
-                    'x-rapidapi-key':'fe7ac125c5msh94f9c196609b1eep12fb18jsndc6f9e5920c3', // Replace with your actual key
-                    'x-rapidapi-host': 'real-time-web-search.p.rapidapi.com'
-                }
+                    'x-rapidapi-key': 'fe7ac125c5msh94f9c196609b1eep12fb18jsndc6f9e5920c3',
+                    'x-rapidapi-host': 'google-api31.p.rapidapi.com',
+                    'Content-Type': 'application/json'
+                },
+                processData: false,
+                data: JSON.stringify({
+                    text: query,
+                    safesearch: "off",
+                    timelimit: "",
+                    region: "",
+                    max_results: 20
+                })
             };
 
-            $.ajax(settings)
-                .done(function(response) {
-                    $('.loading').hide();
-                    
-                    if (response.data && response.data.length > 0) {
-                        searchResults = response.data;
-                        response.data.forEach(function(result) {
-                            const resultHtml = `
-                                <div class="result-item">
-                                    <a href="${result.url}" class="result-title" target="_blank">${result.title}</a>
-                                    <span class="result-url">${result.url}</span>
-                                    <p class="result-description">${result.snippet}</p>
-                                </div>
-                            `;
-                            $('.results').append(resultHtml);
-                        });
-                    } else {
-                        $('.results').html('<p>No results found.</p>');
-                    }
-                })
-                .fail(function(jqXHR, textStatus, errorThrown) {
-                    $('.loading').hide();
-                    $('.results').html('<p>Error occurred while searching. Please try again.</p>');
-                    console.error('Search failed:', textStatus, errorThrown);
-                    alert('Search failed: ' + errorThrown);
+            $.ajax(settings).done(function(response) {
+                $('#results').empty(); // Clear previous results
+                searchResults = response.result; // Store results for copying later
+                response.result.forEach(item => {
+                    $('#results').append(`
+                        <div class="result-item">
+                            <a href="${item.href}" target="_blank">${item.title}</a>
+                            <p>${item.body}</p>
+                        </div>
+                    `);
                 });
+            }).fail(function() {
+                $('#results').html('<p>Terjadi kesalahan saat mengambil hasil.</p>');
+            });
         });
 
-        $('.copy-button').click(function() {
-            if (searchResults.length === 0) {
-                alert('No URLs to copy. Please perform a search first.');
-                return;
-            }
-
-            const urls = searchResults.map(result => result.url).join('\n');
-            const textarea = document.createElement('textarea');
-            textarea.value = urls;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-
-            $('.toast').show();
-            setTimeout(() => {
-                $('.toast').hide();
-            }, 2000);
-        });
-
-        $('.search-input').keypress(function(e) {
-            if (e.which == 13) {
-                $('.search-button').click();
+        $('#copy-links-button').click(function() {
+            if (searchResults.length > 0) {
+                let linkText = "MATCH DATA :\n";
+                searchResults.forEach((item, index) => {
+                    linkText += `${item.href}\n`;
+                });
+                
+                // Create temporary textarea to copy text
+                const textarea = document.createElement('textarea');
+                textarea.value = linkText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                alert('Links have been copied to clipboard!');
+            } else {
+                alert('No search results to copy!');
             }
         });
     });
